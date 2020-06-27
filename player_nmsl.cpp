@@ -277,10 +277,10 @@ Point cul()
         Point bestpoint(next_valid_spots[0]);
         for(auto it : next_valid_spots)
         {
-            newvalue = howgood(it.x,it.y);
+            newvalue = howgood(it.x,it.y)*2;
             if(it.x==0 || it.x==7 || it.y==0 || it.y==7)
             {
-                newvalue += 5;
+                newvalue += 10;
             }
             if((it.x==0 || it.x==7) && (it.y==0 || it.y==7))
             {
@@ -288,7 +288,7 @@ Point cul()
             }
             if(it.x==6 || it.y==6 || it.x==1 || it.y==1)
             {
-                newvalue -= 5;
+                newvalue -= 10;
             }
             for(int i=0;i<8;i++)
             {
