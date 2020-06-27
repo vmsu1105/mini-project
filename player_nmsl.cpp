@@ -11,23 +11,19 @@ struct Point
 {
     int x, y;
     Point() : Point(0, 0) {}
-    Point(int x, int y) : x(x), y(y) {}
-    bool operator==(const Point& rhs) const
-    {
-        return x == rhs.x && y == rhs.y;
-    }
-    bool operator!=(const Point& rhs) const
-    {
-        return !operator==(rhs);
-    }
-    Point operator+(const Point& rhs) const
-    {
-        return Point(x + rhs.x, y + rhs.y);
-    }
-    Point operator-(const Point& rhs) const
-    {
-        return Point(x - rhs.x, y - rhs.y);
-    }
+    Point(float x, float y) : x(x), y(y) {}
+	bool operator==(const Point& rhs) const {
+		return x == rhs.x && y == rhs.y;
+	}
+	bool operator!=(const Point& rhs) const {
+		return !operator==(rhs);
+	}
+	Point operator+(const Point& rhs) const {
+		return Point(x + rhs.x, y + rhs.y);
+	}
+	Point operator-(const Point& rhs) const {
+		return Point(x - rhs.x, y - rhs.y);
+	}
 };
 
 std::array<int, 3> disc_count;
@@ -61,12 +57,35 @@ int center(int x,int y)
     return re;
 }
 
+int howmany()
+{
+    int me = 0;
+    int newme = 0;
+    for(int i=0;i<8;i++)
+    {
+        for(int j=0;j<8;j++)
+        {
+            if(third_board[i][j]==player)
+            {
+                me++;
+            }
+            if(board[i][j]==player)
+            {
+                newme++;
+            }
+        }
+    }
+    int re;
+    re = newme-me;
+    return re;
+}
+
 int howgood(int x,int y)
 {
     int value = 0;
     if(x==0 || x==7 || y==0 || y==7)
     {
-        value += 3;
+        value += 2;
     }
     if((x==0 || x==7) && (y==0 || y==7))
     {
@@ -74,40 +93,9 @@ int howgood(int x,int y)
     }
     if(x==6 || y==6 || x==1 || y==1)
     {
-        value -= 4;
+        value -= 3;
     }
     value += center(x,y);
-    int cnt[10][10];
-    for(int i=0;i<10;i++)
-    {
-        for(int j=0;j<10;j++)
-        {
-            cnt[i][j]=0;
-        }
-    }
-    for(int i=0;i<8;i++)
-    {
-        int px = x + x_dir[i];
-        int py = y + y_dir[i];
-        if(board[px][py]!=3-player)
-        {
-            continue;
-        }
-        while((0 <= px && px < 8 && 0 <= py && py < 8) && board[px][py]!=0)
-        {
-            if(board[px][py]==player)
-            {
-                break;
-            }
-            if(cnt[px][py]==0)
-            {
-                value += 3;
-            }
-            cnt[px][py]=1;
-            px += x_dir[i];
-            py += y_dir[i];
-        }
-    }
     return value;
 }
 
@@ -277,10 +265,9 @@ Point cul()
         Point bestpoint(next_valid_spots[0]);
         for(auto it : next_valid_spots)
         {
-            newvalue = howgood(it.x,it.y);
             if(it.x==0 || it.x==7 || it.y==0 || it.y==7)
             {
-                newvalue += 5;
+                newvalue += 8;
             }
             if((it.x==0 || it.x==7) && (it.y==0 || it.y==7))
             {
@@ -303,7 +290,6 @@ Point cul()
             second_valid_spots = get_valid_spots();
             for(auto sec_it : second_valid_spots)
             {
-                newvalue -= howgood(sec_it.x,sec_it.y);
                 for(int i=0;i<8;i++)
                 {
                     for(int j=0;j<8;j++)
@@ -317,7 +303,7 @@ Point cul()
                 third_valid_spots=get_valid_spots();
                 for(auto thr_it : third_valid_spots)
                 {
-                    newvalue += howgood(thr_it.x,thr_it.y);
+                    newvalue = howmany() + howgood(thr_it.x,thr_it.y);
                     if(newvalue == best)
                     {
                         if(it.x == 0 || it.x == 7 || it.y == 0 || it.y ==7)
@@ -344,7 +330,7 @@ void write_valid_spot(std::ofstream& fout) {
     srand(time(NULL));
     // Keep updating the output until getting killed.
     // Choose random spot. (Not random uniform here)
-    Point bestpoint(cul());
+    Point bestpoint = cul();
     // Remember to flush the output to ensure the last action is written to file.
     fout << bestpoint.x << " " << bestpoint.y << std::endl;
     fout.flush();
