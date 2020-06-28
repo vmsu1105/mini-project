@@ -14,6 +14,9 @@ std::array<std::array<int, SIZE>, SIZE> board;
 int minmax_cnt;
 const int EMPTY = 0;
 const int INF = 10000000;
+int eval;
+int mineval;
+int maxeval;
 
 struct Point {
     int x, y;
@@ -74,20 +77,20 @@ State first;
 std::vector<Point> next_valid_spots;
 const int boardvalue[10][10]=
 {
-{20,-4,3,2,2,3,-4,20},
-{-4,-4,3,1,1,3,-4,-4},
-{ 3, 3,2,1,1,2, 3, 3},
+{99,-6,5,2,2,5,-6,99},
+{-6,-6,5,1,1,5,-6,-6},
+{ 5, 5,3,1,1,3, 5, 5},
 { 2, 1,1,0,0,1, 1, 2},
 { 2, 1,1,0,0,1, 1, 2},
-{ 3, 3,2,1,1,2, 3, 3},
-{-4,-4,3,1,1,3,-4,-4},
-{20,-4,3,2,2,3,-4,20}
+{ 5, 5,3,1,1,3, 5, 5},
+{-6,-6,5,1,1,5,-6,-6},
+{99,-6,5,2,2,5,-6,99}
 };
 
 const std::array<Point, 8> directions{{
         Point(-1, -1), Point(-1, 0), Point(-1, 1),
-        Point(0, -1), /*{0, 0}, */Point(0, 1),
-        Point(1, -1), Point(1, 0), Point(1, 1)
+        Point( 0, -1), /*{0, 0}, */  Point( 0, 1),
+        Point( 1, -1), Point( 1, 0), Point( 1, 1)
     }};
 
 int get_next_player(int player)
@@ -98,13 +101,13 @@ bool is_spot_on_board(Point p)
 {
     return 0 <= p.x && p.x < SIZE && 0 <= p.y && p.y < SIZE;
 }
-int get_disc(Point p,State s) {
-    return s.bd[p.x][p.y];
+int get_disc(Point p,State st) {
+    return st.bd[p.x][p.y];
 }
-State set_disc(Point p, int disc,State s)
+State set_disc(Point p, int disc,State st)
 {
-    s.bd[p.x][p.y] = disc;
-    return s;
+    st.bd[p.x][p.y] = disc;
+    return st;
 }
 bool is_disc_at(Point p, int disc,State s)
 {
@@ -132,34 +135,34 @@ bool is_spot_valid(Point center,int cur_player,State s)
     }
     return false;
 }
-State flip_discs(Point center,int cur_player,State s)
+State flip_discs(Point center,int cur_player,State st)
 {
     for (Point dir: directions) {
         // Move along the direction while testing.
         Point p = center + dir;
-        if (!is_disc_at(p, get_next_player(cur_player),s))
+        if (!is_disc_at(p, get_next_player(cur_player),st))
             continue;
         std::vector<Point> discss({p});
         p = p + dir;
-        while (is_spot_on_board(p) && get_disc(p,s) != EMPTY)
+        while (is_spot_on_board(p) && get_disc(p,st) != EMPTY)
         {
-            if (is_disc_at(p, cur_player,s))
+            if (is_disc_at(p, cur_player,st))
             {
                 for (Point pp: discss)
                 {
-                    s = set_disc(pp, cur_player,s);
+                    st = set_disc(pp, cur_player,st);
                 }
-                s.discs[cur_player] += discss.size();
-                s.discs[get_next_player(cur_player)] -= discss.size();
+                st.discs[cur_player] += discss.size();
+                st.discs[get_next_player(cur_player)] -= discss.size();
                 break;
             }
             discss.push_back(p);
             p = p + dir;
         }
     }
-    return s;
+    return st;
 }
-std::vector<Point> get_valid_spots(int cur_player,State s)
+std::vector<Point> get_valid_spots(int cur_player,State st)
 {
     std::vector<Point> valid_spots;
     for (int i = 0; i < SIZE; i++) {
@@ -167,21 +170,21 @@ std::vector<Point> get_valid_spots(int cur_player,State s)
             Point p = Point(i, j);
         if (board[i][j] != EMPTY)
                 continue;
-        if (is_spot_valid(p,cur_player,s))
+        if (is_spot_valid(p,cur_player,st))
             valid_spots.push_back(p);
         }
     }
     return valid_spots;
 }
-int getvalue(State s,int curplayer)
+int getvalue(State st)
 {
     int  value=0;
-    value += s.discs[player];
+    value += st.discs[player];
     for(int i=0;i<SIZE;i++)
     {
         for(int j=0;j<SIZE;j++)
         {
-            if(s.bd[i][j]==player)
+            if(st.bd[i][j]==player)
             {
                 value += boardvalue[i][j];
             }
@@ -194,43 +197,52 @@ int minimax(State cur, int depth, int alpha, int beta,int curplayer)
 {
     if(curplayer == player)
     {
+        maxeval = -INF;
         for(Point p : cur.next_valid)
         {
             State tmp = cur;
-            tmp = set_disc(p,curplayer,tmp);
-            tmp = flip_discs(p,curplayer,tmp);
-            tmp.next_valid = get_valid_spots(get_next_player(curplayer),tmp);
-            tmp.n_valid_spots = tmp.next_valid.size();
+            tmp=set_disc(p,curplayer,tmp);
+            tmp=flip_discs(p,curplayer,tmp);
+            tmp.next_valid=get_valid_spots(get_next_player(curplayer),tmp);
+            tmp.n_valid_spots=tmp.next_valid.size();
             if(depth==0 || tmp.n_valid_spots==0)
-                return getvalue(tmp,player);
+                return getvalue(tmp);
             else
             {
-                int value = minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer));
-                if(alpha < value && depth==5)
+                eval=minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer));
+                if(alpha < eval && depth==5)
                     best = p;
-                alpha=max(alpha,value);
+                alpha = max(alpha,eval);
+                maxeval = max(maxeval,alpha);
             }
             if(beta <= alpha)
                 break;
         }
-        return alpha;
+        return maxeval;
     }
     else
     {
+        mineval = INF;
         for(Point p:cur.next_valid)
         {
-            State tmp = cur;
-            tmp = set_disc(p,curplayer,tmp);
-            tmp = flip_discs(p,curplayer,tmp);
-            tmp.next_valid = get_valid_spots(get_next_player(curplayer),tmp);
-            tmp.n_valid_spots = tmp.next_valid.size();
+            mineval = INF;
+            State tmp=cur;
+            tmp=set_disc(p,curplayer,tmp);
+            tmp=flip_discs(p,curplayer,tmp);
+            tmp.next_valid=get_valid_spots(get_next_player(curplayer),tmp);
+            tmp.n_valid_spots=tmp.next_valid.size();
             if(depth==0||tmp.n_valid_spots==0)
-                return getvalue(tmp,player);
-            else beta = min(beta,minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer)));
+                return getvalue(tmp);
+            else
+            {
+                eval = minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer));
+                beta = min(beta,eval);
+                mineval = min(beta,eval);
+            }
             if(beta <= alpha)
                 break;
         }
-        return beta;
+        return mineval;
     }
 }
 
