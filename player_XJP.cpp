@@ -197,15 +197,15 @@ int minimax(State cur, int depth, int alpha, int beta,int curplayer)
         for(Point p : cur.next_valid)
         {
             State tmp = cur;
-            tmp=set_disc(p,curplayer,tmp);
-            tmp=flip_discs(p,curplayer,tmp);
-            tmp.next_valid=get_valid_spots(get_next_player(curplayer),tmp);
-            tmp.n_valid_spots=tmp.next_valid.size();
+            tmp = set_disc(p,curplayer,tmp);
+            tmp = flip_discs(p,curplayer,tmp);
+            tmp.next_valid = get_valid_spots(get_next_player(curplayer),tmp);
+            tmp.n_valid_spots = tmp.next_valid.size();
             if(depth==0 || tmp.n_valid_spots==0)
                 return getvalue(tmp,player);
             else
             {
-                int value=minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer));
+                int value = minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer));
                 if(alpha < value && depth==5)
                     best = p;
                 alpha=max(alpha,value);
@@ -219,14 +219,14 @@ int minimax(State cur, int depth, int alpha, int beta,int curplayer)
     {
         for(Point p:cur.next_valid)
         {
-            State tmp=cur;
-            tmp=set_disc(p,curplayer,tmp);
-            tmp=flip_discs(p,curplayer,tmp);
-            tmp.next_valid=get_valid_spots(get_next_player(curplayer),tmp);
-            tmp.n_valid_spots=tmp.next_valid.size();
+            State tmp = cur;
+            tmp = set_disc(p,curplayer,tmp);
+            tmp = flip_discs(p,curplayer,tmp);
+            tmp.next_valid = get_valid_spots(get_next_player(curplayer),tmp);
+            tmp.n_valid_spots = tmp.next_valid.size();
             if(depth==0||tmp.n_valid_spots==0)
                 return getvalue(tmp,player);
-            else beta=min(beta,minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer)));
+            else beta = min(beta,minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer)));
             if(beta <= alpha)
                 break;
         }
