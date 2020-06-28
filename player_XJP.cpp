@@ -17,6 +17,7 @@ const int INF = 10000000;
 int eval;
 int mineval;
 int maxeval;
+bool flag;
 
 struct Point {
     int x, y;
@@ -282,7 +283,19 @@ void write_valid_spot(std::ofstream& fout) {
     best = first.next_valid[ran];
     fout << best.x << " " << best.y << std::endl;
     fout.flush();
-    minimax(first, 5,-INF,INF,player);
+    for(Point p : first.next_valid)
+    {
+        if((p.x==0 || p.x==7) && (p.y==0 || p.y==7))
+        {
+            best = p;
+            flag = true;
+        }
+    }
+    if(!flag)
+    {
+        minimax(first, 5,-INF,INF,player);
+        flag = false;
+    }
     fout << best.x << " " << best.y << std::endl;
     fout.flush();
 }
