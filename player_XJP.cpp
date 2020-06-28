@@ -39,9 +39,9 @@ struct Point {
 class State{
     public:
     int n_valid_spots;
+    int discs[3];
     vector<Point>next_valid;
-    int bd[8][8];
-    array<int,3>discs;
+    int newboard[8][8];
     State(std::array<std::array<int, SIZE>, SIZE> board)
     {
         for(int i=0;i<3;i++)
@@ -52,12 +52,17 @@ class State{
         {
             for(int j=0;j<8;j++)
             {
-                bd[i][j]=board[i][j];
+                newboard[i][j]=board[i][j];
                 discs[board[i][j]]++;
             }
         }
     }
-    State(){
+    State()
+    {
+        reset();
+    }
+    void reset()
+    {
         for(int i=0;i<3;i++)
         {
             discs[i]=0;
@@ -66,7 +71,7 @@ class State{
         {
             for(int j=0;j<8;j++)
             {
-                bd[i][j]=0;
+                newboard[i][j]=EMPTY;
             }
         }
     }
@@ -102,11 +107,11 @@ bool is_spot_on_board(Point p)
     return 0 <= p.x && p.x < SIZE && 0 <= p.y && p.y < SIZE;
 }
 int get_disc(Point p,State st) {
-    return st.bd[p.x][p.y];
+    return st.newboard[p.x][p.y];
 }
 State set_disc(Point p, int disc,State st)
 {
-    st.bd[p.x][p.y] = disc;
+    st.newboard[p.x][p.y] = disc;
     return st;
 }
 bool is_disc_at(Point p, int disc,State s)
@@ -184,13 +189,31 @@ int getvalue(State st)
     {
         for(int j=0;j<SIZE;j++)
         {
-            if(st.bd[i][j]==player)
+            if(st.newboard[i][j]==player)
             {
                 value += boardvalue[i][j];
             }
         }
     }
     return value;
+}
+
+void read_board(std::ifstream& fin) {
+    fin >> player;
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            fin >> board[i][j];
+        }
+    }
+}
+int nn_valid_spot;
+void read_valid_spots(std::ifstream& fin) {
+    fin >> nn_valid_spot;
+    int x, y;
+    for (int i = 0; i < nn_valid_spot; i++) {
+        fin >> x >> y;
+        first.next_valid.push_back({x, y});
+    }
 }
 
 int minimax(State cur, int depth, int alpha, int beta,int curplayer)
@@ -246,30 +269,12 @@ int minimax(State cur, int depth, int alpha, int beta,int curplayer)
     }
 }
 
-void read_board(std::ifstream& fin) {
-    fin >> player;
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            fin >> board[i][j];
-        }
-    }
-}
-int nn_valid_spot;
-void read_valid_spots(std::ifstream& fin) {
-    fin >> nn_valid_spot;
-    int x, y;
-    for (int i = 0; i < nn_valid_spot; i++) {
-        fin >> x >> y;
-        first.next_valid.push_back({x, y});
-    }
-}
-
 void write_valid_spot(std::ofstream& fout) {
     for(int i=0;i<SIZE;i++)
     {
         for(int j=0;j<SIZE;j++)
         {
-            first.bd[i][j]=board[i][j];
+            first.newboard[i][j]=board[i][j];
         }
     }
     srand(time(NULL));
