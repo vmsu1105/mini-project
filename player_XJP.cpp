@@ -72,16 +72,16 @@ class State{
 Point best;
 State first;
 std::vector<Point> next_valid_spots;
-int boardvalue[10][10]=
+const int boardvalue[10][10]=
 {
-{15,-4,3,2,2,3,-4,15},
+{20,-4,3,2,2,3,-4,20},
 {-4,-4,3,1,1,3,-4,-4},
 { 3, 3,2,1,1,2, 3, 3},
 { 2, 1,1,0,0,1, 1, 2},
 { 2, 1,1,0,0,1, 1, 2},
 { 3, 3,2,1,1,2, 3, 3},
 {-4,-4,3,1,1,3,-4,-4},
-{15,-4,3,2,2,3,-4,15}
+{20,-4,3,2,2,3,-4,20}
 };
 
 const std::array<Point, 8> directions{{
@@ -176,30 +176,19 @@ std::vector<Point> get_valid_spots(int cur_player,State s)
 int getvalue(State s,int curplayer)
 {
     int  value=0;
-    if(s.bd[0][0]==get_next_player(player))
-        for(int i=0;i<2;i++)
-            for(int j=0;j<2;j++)
-                boardvalue[i][j]=0;
-    if(s.bd[0][SIZE-1]==get_next_player(player))
-        for(int i=0;i<2;i++)
-            for(int j=SIZE-1;j>SIZE-3;j--)
-                boardvalue[i][j]=0;
-    if(s.bd[SIZE-1][SIZE-1]==get_next_player(player))
-        for(int i=SIZE-1;i>SIZE-3;i--)
-            for(int j=SIZE-1;j>SIZE-3;j--)
-                boardvalue[i][j]=0;
-    if(s.bd[SIZE-1][0]==get_next_player(player))
-        for(int i=SIZE-1;i>SIZE-3;i--)
-            for(int j=0;j<2;j++)
-                boardvalue[i][j]=0;
-    for(int i=0;i<SIZE;i++)
-        for(int j=0;j<SIZE;j++)
-            if(s.bd[i][j]==player)
-                value += boardvalue[i][j];
     value += s.discs[player];
+    for(int i=0;i<SIZE;i++)
+    {
+        for(int j=0;j<SIZE;j++)
+        {
+            if(s.bd[i][j]==player)
+            {
+                value += boardvalue[i][j];
+            }
+        }
+    }
     return value;
 }
-
 
 int minimax(State cur, int depth, int alpha, int beta,int curplayer)
 {
@@ -212,16 +201,16 @@ int minimax(State cur, int depth, int alpha, int beta,int curplayer)
             tmp=flip_discs(p,curplayer,tmp);
             tmp.next_valid=get_valid_spots(get_next_player(curplayer),tmp);
             tmp.n_valid_spots=tmp.next_valid.size();
-            if(depth==0||tmp.n_valid_spots==0)
+            if(depth==0 || tmp.n_valid_spots==0)
                 return getvalue(tmp,player);
             else
             {
                 int value=minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer));
-                if(alpha < value && depth==3)
+                if(alpha < value && depth==5)
                     best = p;
                 alpha=max(alpha,value);
             }
-            if(beta<=alpha)
+            if(beta <= alpha)
                 break;
         }
         return alpha;
@@ -238,7 +227,7 @@ int minimax(State cur, int depth, int alpha, int beta,int curplayer)
             if(depth==0||tmp.n_valid_spots==0)
                 return getvalue(tmp,player);
             else beta=min(beta,minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer)));
-            if(beta<=alpha)
+            if(beta <= alpha)
                 break;
         }
         return beta;
@@ -271,7 +260,12 @@ void write_valid_spot(std::ofstream& fout) {
             first.bd[i][j]=board[i][j];
         }
     }
-    minimax(first, 3,-INF,INF,player);
+    srand(time(NULL));
+    int ran = (rand() % first.next_valid.size());
+    best = first.next_valid[ran];
+    fout << best.x << " " << best.y << std::endl;
+    fout.flush();
+    minimax(first, 5,-INF,INF,player);
     fout << best.x << " " << best.y << std::endl;
     fout.flush();
 }
