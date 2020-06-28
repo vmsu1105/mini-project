@@ -35,7 +35,6 @@ struct Point {
 	Point operator-(const Point& rhs) const {
 		return Point(x - rhs.x, y - rhs.y);
 	}
-
 };
 class State{
     public:
@@ -185,7 +184,7 @@ std::vector<Point> get_valid_spots(int cur_player,State st)
 int getvalue(State st)
 {
     int  value=0;
-    value += st.discs[player];
+    value += st.discs[player]*2;
     for(int i=0;i<SIZE;i++)
     {
         for(int j=0;j<SIZE;j++)
@@ -219,55 +218,60 @@ void read_valid_spots(std::ifstream& fin) {
 
 int minimax(State cur, int depth, int alpha, int beta,int curplayer)
 {
-    if(curplayer == player)
+    if(depth==0)
     {
-        maxeval = -INF;
         for(Point p : cur.next_valid)
         {
             State tmp = cur;
-            tmp=set_disc(p,curplayer,tmp);
-            tmp=flip_discs(p,curplayer,tmp);
-            tmp.next_valid=get_valid_spots(get_next_player(curplayer),tmp);
-            tmp.n_valid_spots=tmp.next_valid.size();
-            if(depth==0 || tmp.n_valid_spots==0)
-                return getvalue(tmp);
-            else
+            tmp = set_disc(p,curplayer,tmp);
+            tmp = flip_discs(p,curplayer,tmp);
+            tmp.next_valid = get_valid_spots(get_next_player(curplayer),tmp);
+            tmp.n_valid_spots = tmp.next_valid.size();
+            return getvalue(tmp);
+        }
+    }
+    else
+    {
+        for(Point p : cur.next_valid)
+        {
+            State tmp = cur;
+            tmp = set_disc(p,curplayer,tmp);
+            tmp = flip_discs(p,curplayer,tmp);
+            tmp.next_valid = get_valid_spots(get_next_player(curplayer),tmp);
+            tmp.n_valid_spots = tmp.next_valid.size();
+            if(tmp.n_valid_spots==0)
             {
-                eval=minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer));
+                return getvalue(tmp);
+            }
+            if(curplayer == player)
+            {
+                maxeval = -INF;
+                eval = minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer));
                 if(alpha < eval && depth==5)
                     best = p;
                 alpha = max(alpha,eval);
                 maxeval = max(maxeval,alpha);
+                if(beta <= alpha)
+                {
+                    break;
+                }
             }
-            if(beta <= alpha)
-                break;
-        }
-        return maxeval;
-    }
-    else
-    {
-        mineval = INF;
-        for(Point p:cur.next_valid)
-        {
-            mineval = INF;
-            State tmp=cur;
-            tmp=set_disc(p,curplayer,tmp);
-            tmp=flip_discs(p,curplayer,tmp);
-            tmp.next_valid=get_valid_spots(get_next_player(curplayer),tmp);
-            tmp.n_valid_spots=tmp.next_valid.size();
-            if(depth==0||tmp.n_valid_spots==0)
-                return getvalue(tmp);
             else
             {
+                mineval = INF;
                 eval = minimax(tmp,depth-1,alpha,beta,get_next_player(curplayer));
                 beta = min(beta,eval);
                 mineval = min(beta,eval);
+                if(beta <= alpha)
+                {
+                    break;
+                }
             }
-            if(beta <= alpha)
-                break;
         }
-        return mineval;
+        if(curplayer==player) return maxeval;
+        else return mineval;
     }
+    return 0;
 }
 
 void write_valid_spot(std::ofstream& fout) {
